@@ -24,7 +24,7 @@ $userProfile = $twitterAnalyzer->getUserDetails($_GET['twitterUsername']);
                 <div class="card-body">
                     <canvas id="myBarChart" width="100" height="30"></canvas>
                 </div>
-                <div class="card-footer small text-muted">Updated yesterday at 11:59 PM</div>
+                <div class="card-footer small text-muted">Based on User Time Zone: <?php echo $userProfile->time_zone; ?></div>
               </div>
         </div>
     </div>
@@ -83,4 +83,66 @@ $userProfile = $twitterAnalyzer->getUserDetails($_GET['twitterUsername']);
     </div> <!-- /container -->
 
 </main>
+<?php
+/***** X-AXIS LABELS *****/
+ $xAxisLabel = array();
+ $yAxisValue = array();
+ for($i=0; $i<24; $i++):
+     $xAxisLabel[$i] = '"'. date('h:i A', strtotime($i .':00')).'"';
+     $yAxisValue[$i] = 0;
+ endfor;
+foreach ($response as $responseVal):
+    $date = $responseVal->created_at;
+    $date = strtotime($date);
+    $hourGiven = date('H', $date);
+    //CHECK IF HOUR IS IN ARRAY
+    $yAxisValue[intval($hourGiven)]++;
+endforeach;
+
+echo max($yAxisValue);
+?>
 <?php include("views/layout/footer.php"); ?>
+<script type="text/javascript">
+
+
+var ctx = document.getElementById("myBarChart");
+var myLineChart = new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: [<?php echo implode(',', $xAxisLabel);?>],
+    datasets: [{
+      label: "Number of Tweets",
+      backgroundColor: "rgba(2,117,216,1)",
+      borderColor: "rgba(2,117,216,1)",
+      data: [<?php echo implode(',', $yAxisValue);?>],
+    }],
+  },
+  options: {
+    scales: {
+      xAxes: [{
+        time: {
+          unit: 'hour'
+        },
+        gridLines: {
+          display: false
+        },
+        ticks: {
+          maxTicksLimit: 24
+        }
+      }],
+      yAxes: [{
+        ticks: {
+          min: 0,
+          max: 100,
+          maxTicksLimit: 15
+        },
+        gridLines: {
+          display: true
+        }
+      }],
+    },
+    legend: {
+      display: false
+    }
+  }
+});</script>
