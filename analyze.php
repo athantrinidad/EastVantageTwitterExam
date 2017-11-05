@@ -18,7 +18,14 @@ $userProfile = $twitterAnalyzer->getUserDetails($_GET['twitterUsername']);
     <div class="jumbotron">
         <div class="container">
             <h1 class="display-3">Analysis Result for <quote><?php echo $_GET['twitterUsername']; ?></quote></h1>
-
+            <div class="card mb-3">
+                <div class="card-header">
+                  <i class="fa fa-bar-chart"></i> User Twitter Histogram Overview</div>
+                <div class="card-body">
+                    <canvas id="myBarChart" width="100" height="30"></canvas>
+                </div>
+                <div class="card-footer small text-muted">Updated yesterday at 11:59 PM</div>
+              </div>
         </div>
     </div>
 
