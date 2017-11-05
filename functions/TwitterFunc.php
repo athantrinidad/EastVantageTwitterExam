@@ -22,9 +22,33 @@ class TwitterGet{
         return $this->glob['consumer_secret'];
     }
     
-    public function getUserTweets(){
+    public function getUserDetails($username){
+        $url = 'https://api.twitter.com/1.1/users/show.json';
+        $getfield = '?screen_name='.$username;
+        $requestMethod = 'GET';
+
+        $twitter = new TwitterAPIExchange($this->glob);
+
+        return json_decode($twitter->setGetfield($getfield)
+            ->buildOauth($url, $requestMethod)
+            ->performRequest());    
+    }
+    
+    public function getUserImage($username){
+        $url = 'https://api.twitter.com/1.1/users/profile_banner.json';
+        $getfield = '?screen_name='.$username;
+        $requestMethod = 'GET';
+
+        $twitter = new TwitterAPIExchange($this->glob);
+
+        return json_decode($twitter->setGetfield($getfield)
+            ->buildOauth($url, $requestMethod)
+            ->performRequest());    
+    }
+    
+    public function getUserTweets($username){
         $url = 'https://api.twitter.com/1.1/statuses/user_timeline.json';
-        $getfield = '?screen_name='.$_GET['twitterUsername'].'&count=200';
+        $getfield = '?screen_name='.$username.'&count=200';
         $requestMethod = 'GET';
 
         $twitter = new TwitterAPIExchange($this->glob);
