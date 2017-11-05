@@ -5,10 +5,12 @@ require_once('conf.php');
 /* * ***** INITIALIZE ****** */
 $twitterAnalyzer = new TwitterGet();
 
-/* * ***** GET USER TWEETS ****** */
+/******* GET USER TWEETS *******/
 $response = $twitterAnalyzer->getUserTweets($_GET['twitterUsername']);
 
+/***** GET USER PROFILE DETAILS *****/
 $userProfile = $twitterAnalyzer->getUserDetails($_GET['twitterUsername']);
+
 ?>
 <?php include("views/layout/header.php"); ?>
 
@@ -17,15 +19,36 @@ $userProfile = $twitterAnalyzer->getUserDetails($_GET['twitterUsername']);
     <!-- Main jumbotron for a primary marketing message or call to action -->
     <div class="jumbotron">
         <div class="container">
-            <h1 class="display-3">Analysis Result for <quote><?php echo $_GET['twitterUsername']; ?></quote></h1>
-            <div class="card mb-3">
-                <div class="card-header">
-                  <i class="fa fa-bar-chart"></i> User Twitter Histogram Overview</div>
-                <div class="card-body">
-                    <canvas id="myBarChart" width="100" height="30"></canvas>
+            <h1 class="display-3">Analysis Result for "<em><?php echo $_GET['twitterUsername']; ?></em>"</h1>
+            <div class="row">
+            <div class="col-md-9">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <i class="fa fa-bar-chart"></i> User Twitter Histogram Overview</div>
+                    <div class="card-body">
+                        <canvas id="myBarChart" width="100" height="50"></canvas>
+                    </div>
+                    <div class="card-footer small text-muted">Based on User Time Zone: <?php echo $userProfile->time_zone; ?></div>
                 </div>
-                <div class="card-footer small text-muted">Based on User Time Zone: <?php echo $userProfile->time_zone; ?></div>
-              </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <i class="fa fa-pie-chart"></i><?php echo $userProfile->name; ?></div>
+                    <div class="card-body text-center">
+                        <img src="<?php echo $userProfile->profile_image_url; ?>" class="img-responsive img-circle" />
+                    </div>
+                </div>
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <i class="fa fa-pie-chart"></i>DayTime Overview</div>
+                    <div class="card-body">
+                        <canvas id="myPieChart" width="100%" height="100"></canvas>
+                    </div>
+                </div>
+                <small>Note: Only recent 200 tweets are allowed by the Twitter API</small>
+            </div>
+            </div>
         </div>
     </div>
 
@@ -50,31 +73,23 @@ $userProfile = $twitterAnalyzer->getUserDetails($_GET['twitterUsername']);
             <div class="col-md-8">
                 <div class="card mb-3">
                     <div class="card-header">
-                        <i class="fa fa-bell-o"></i>Tweets</div>
+                        <i class="fa fa-bell-o"></i>Recent Tweets</div>
                     <div class="list-group list-group-flush small">
-                        <?php foreach ($response as $responseVal):?>
-                        <a class="list-group-item list-group-item-action" href="#">
-                            <div class="media">
-                                <img class="d-flex mr-3 rounded-circle" src="<?php echo $userProfile->profile_image_url; ?>" alt="">
-                                <div class="media-body">
-                                    <?php echo $responseVal->text;?>
-                                    <div class="text-muted smaller"><?php echo $responseVal->created_at;?></div>
+                        <?php foreach ($response as $responseVal): ?>
+                            <a class="list-group-item list-group-item-action" href="#">
+                                <div class="media">
+                                    <img class="d-flex mr-3 rounded-circle" src="<?php echo $userProfile->profile_image_url; ?>" alt="">
+                                    <div class="media-body">
+                                        <?php echo $responseVal->text; ?>
+                                        <div class="text-muted smaller"><?php echo $responseVal->created_at; ?></div>
+                                    </div>
                                 </div>
-                            </div>
-                        </a>
+                            </a>
                         <?php endforeach; ?>
-                        
-                        <a class="list-group-item list-group-item-action" href="#">View all activity...</a>
+
                     </div>
                 </div>
-                
-            </div>
-            <div class="col-md-4">
-                <?php
-                echo "<pre>";
-                //print_r($userProfileImage);
-                echo "</pre>";
-                ?>
+
             </div>
         </div>
 
@@ -85,64 +100,111 @@ $userProfile = $twitterAnalyzer->getUserDetails($_GET['twitterUsername']);
 </main>
 <?php
 /***** X-AXIS LABELS *****/
- $xAxisLabel = array();
- $yAxisValue = array();
- for($i=0; $i<24; $i++):
-     $xAxisLabel[$i] = '"'. date('h:i A', strtotime($i .':00')).'"';
-     $yAxisValue[$i] = 0;
- endfor;
+$xAxisLabel = array();
+
+/***** Y-AXIS LABELS *****/
+$yAxisValue = array();
+
+/***** DAYTIME LABELS *****/
+$morningVal = 0;
+$nightVal = 0;
+/***** END DAYTIME LABELS *****/
+
+/***** START DAYTIME CHART CALCULATION BASIS*****/
+$start_time = "00:00 am"; 
+$end_time = "11:59 am"; 
+
+$date2 = DateTime::createFromFormat('H:i a', $start_time); 
+$date3 = DateTime::createFromFormat('H:i a', $end_time); 
+/***** END DAYTIME CHART CALCULATION BASIS*****/
+
+/***** START ITERATE FOR THE PROPER LABELING OF THE GRAPH *****/
+for ($i = 0; $i < 24; $i++):
+    $xAxisLabel[$i] = '"' . date('h:i A', strtotime($i . ':00')) . '"';
+    $yAxisValue[$i] = 0;
+endfor;
+/***** END ITERATE FOR THE PROPER LABELING OF THE GRAPH *****/
+
+/***** START POPULATE Y-AXIS OF VALUES *****/
 foreach ($response as $responseVal):
-    $date = $responseVal->created_at;
-    $date = strtotime($date);
-    $hourGiven = date('H', $date);
+    
+    $hourGiven = date('H', strtotime($responseVal->created_at));
+
     //CHECK IF HOUR IS IN ARRAY
     $yAxisValue[intval($hourGiven)]++;
-endforeach;
+    
+    $currentTweetTime = date("H:i a",strtotime($responseVal->created_at));
+    $date1 = DateTime::createFromFormat('H:i a', $currentTweetTime); 
+    
+    if ($date3 < $date2) { $date3->add(new DateInterval('P1D')); 
+    if ($date1 < $date2) { $date1->add(new DateInterval('P1D')); } } 
+    if ($date1 > $date2 && $date1 < $date3) { 
+        $morningVal++;
+    } else { 
+        $nightVal++;
 
-echo max($yAxisValue);
+    }
+endforeach;
+/***** END OF POPULATE Y-AXIS OF VALUES *****/
 ?>
 <?php include("views/layout/footer.php"); ?>
+
 <script type="text/javascript">
 
+/***** BAR PIE CHART *****/
+    var ctx = document.getElementById("myBarChart");
+    var myLineChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [<?php echo implode(',', $xAxisLabel); ?>],
+            datasets: [{
+                    label: "Number of Tweets",
+                    backgroundColor: "rgba(2,117,216,1)",
+                    borderColor: "rgba(2,117,216,1)",
+                    data: [<?php echo implode(',', $yAxisValue); ?>],
+                }],
+        },
+        options: {
+            scales: {
+                xAxes: [{
+                        time: {
+                            unit: 'hour'
+                        },
+                        gridLines: {
+                            display: false
+                        },
+                        ticks: {
+                            maxTicksLimit: 24
+                        }
+                    }],
+                yAxes: [{
+                        ticks: {
+                            min: 0,
+                            max: 100,
+                            maxTicksLimit: 15
+                        },
+                        gridLines: {
+                            display: true
+                        }
+                    }],
+            },
+            legend: {
+                display: false
+            }
+        }
+    });
 
-var ctx = document.getElementById("myBarChart");
-var myLineChart = new Chart(ctx, {
-  type: 'bar',
-  data: {
-    labels: [<?php echo implode(',', $xAxisLabel);?>],
-    datasets: [{
-      label: "Number of Tweets",
-      backgroundColor: "rgba(2,117,216,1)",
-      borderColor: "rgba(2,117,216,1)",
-      data: [<?php echo implode(',', $yAxisValue);?>],
-    }],
-  },
-  options: {
-    scales: {
-      xAxes: [{
-        time: {
-          unit: 'hour'
+
+/***** DAYTIME PIE CHART *****/
+    var ctx = document.getElementById("myPieChart");
+    var myPieChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ["Morning", "Afternoon"],
+            datasets: [{
+                    data: [<?php echo $morningVal; ?>, <?php echo $nightVal; ?>],
+                    backgroundColor: ['#007bff', '#dc3545'],
+                }],
         },
-        gridLines: {
-          display: false
-        },
-        ticks: {
-          maxTicksLimit: 24
-        }
-      }],
-      yAxes: [{
-        ticks: {
-          min: 0,
-          max: 100,
-          maxTicksLimit: 15
-        },
-        gridLines: {
-          display: true
-        }
-      }],
-    },
-    legend: {
-      display: false
-    }
-  }
-});</script>
+    });
+    </script>
