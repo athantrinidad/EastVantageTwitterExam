@@ -1,53 +1,33 @@
-<?php
-ini_set('display_errors', 1);
-require_once('lib/TwitterAPIExchange.php');
+<?php include("views/layout/header.php"); ?>
 
-/** Set access tokens here - see: https://dev.twitter.com/apps/ **/
-$settings = array(
-    'oauth_access_token' => "88411215-GZ6mCAXNc5CsJ16YdZSIrHWgH5lGH2GxUitpM7frU",
-    'oauth_access_token_secret' => "IGWF2gVMHwgC0qnqv9IrSiGrsBoZZG4Xu6Ev0we42uwIA",
-    'consumer_key' => "oGUq5UMqAi4tIz5JVscYQ",
-    'consumer_secret' => "yCGSX6tlZMfLHstQtkC0kEioHsUxLrlqvZJrrS2YE"
-);
+<main role="main">
 
-/** URL for REST request, see: https://dev.twitter.com/docs/api/1.1/ **/
-$url = 'https://api.twitter.com/1.1/blocks/create.json';
-$requestMethod = 'POST';
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+        <div class="container">
+            <h1 class="display-3">EastVantage Code Examination</h1>
+            <p>Write a program which polls the twitter API based on a username and summarises the users last 500 tweets in a histogram. We need to know which hours a user is most active. Please create a repository on bitbucket or github, heroku or openshift (or any other PaaS provider) and send through access instructions. We are interested in viewing the commit history & a working version of your solution.</p>
 
-/** POST fields required by the URL above. See relevant docs as above **/
-$postfields = array(
-    'screen_name' => 'athantrinidad', 
-    'skip_status' => '1'
-);
+        </div>
+    </div>
 
-/** Perform a POST request and echo the response 
-$twitter = new TwitterAPIExchange($settings);
-echo $twitter->buildOauth($url, $requestMethod)
-             ->setPostfields($postfields)
-             ->performRequest();
-**/
-/** Perform a GET request and echo the response **/
-/** Note: Set the GET field BEFORE calling buildOauth(); 
-$url = 'https://api.twitter.com/1.1/followers/ids.json';
-$getfield = '?screen_name=athantrinidad';
-$requestMethod = 'GET';
-$twitter = new TwitterAPIExchange($settings);
-echo "<pre>".$twitter->setGetfield($getfield)
-             ->buildOauth($url, $requestMethod)
-             ->performRequest() . "</pre>";
- * **/
- 
+    <div class="container">
+        <!-- Example row of columns -->
+        <div class="row">
+            <div class="col-md-12">
+                <h2>Begin Search</h2>
+                <p>Enter twitter username</p>
+                <form class="form-inline my-2 my-lg-0" action="analyze.php" method="GET">
+                    <input name="twitterUsername" class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search">
+                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+                </form>
+            </div>
+        </div>
 
-$url = 'https://api.twitter.com/1.1/statuses/user_timeline.json';
-$getfield = '?screen_name=AngPoetNyo';
-$requestMethod = 'GET';
+        <hr>
 
-$twitter = new TwitterAPIExchange($settings);
+    </div> <!-- /container -->
 
-$response = $twitter->setGetfield($getfield)
-    ->buildOauth($url, $requestMethod)
-    ->performRequest();
+</main>
 
-echo "<pre>";
-print_r(json_decode($response));
-echo "</pre>";
+<?php include("views/layout/footer.php"); ?>
